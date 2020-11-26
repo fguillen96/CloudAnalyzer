@@ -1,0 +1,9 @@
+.venv
+.idea
+.vscode
+24-09-2020.csv
+CloudAnalyzer.code-workspace
+utils/__pycache__/
+examples
+__pycache__
+utils/examples

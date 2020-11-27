@@ -49,15 +49,15 @@ class View:
         lbl_export_info = tk.Label(self.root, textvariable=self.lbl_export_info_var)
 
         # ---------- PACK ELEMENTS ----------
-        lbl_image.pack(padx=30, pady=10)                                # Image
-        sep_separator1.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)  # Separator
-        btn_load.pack(fill=tk.BOTH, padx=10, pady=10)                   # Load button
-        lbl_info.pack(fill=tk.BOTH, padx=10, pady=0, expand=False)      # Info label
-        sep_separator2.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)  # Separator
-        self.__btn_analyze.pack(fill=tk.BOTH, padx=10, pady=10)         # Analyze button (as attribute)
-        lbl_n_clouds.pack(fill=tk.BOTH, padx=10, pady=0)                # Number of clouds label
-        sep_separator3.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)  # Separator
-        self.__btn_export_clouds.pack(fill=tk.BOTH, padx=10, pady=10)   # Export button (as attribute)
+        lbl_image.pack(padx=30, pady=10)                                    # Image
+        sep_separator1.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)     # Separator
+        btn_load.pack(fill=tk.BOTH, padx=10, pady=10)                       # Load button
+        lbl_info.pack(fill=tk.BOTH, padx=10, pady=0, expand=False)          # Info label
+        sep_separator2.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)     # Separator
+        self.__btn_analyze.pack(fill=tk.BOTH, padx=10, pady=10)             # Analyze button (as attribute)
+        lbl_n_clouds.pack(fill=tk.BOTH, padx=10, pady=0)                    # Number of clouds label
+        sep_separator3.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)     # Separator
+        self.__btn_export_clouds.pack(fill=tk.BOTH, padx=10, pady=10)       # Export button (as attribute)
         lbl_export_info.pack(fill=tk.BOTH, padx=10, pady=0)
 
     def disable_btn_analyze(self):

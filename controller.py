@@ -10,6 +10,7 @@ class Controller():
     def __init__(self):
         self.model = Model(self)    # initializes the model
         self.view = View(self)      # initializes the view
+        self.view.root.configure()
         self.view.root.mainloop()
 
     # ---------- EVENT HANDLERS ----------

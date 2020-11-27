@@ -13,14 +13,17 @@ class FileError(Exception):
 class DayData:
     # Constructor de la clase. Se le pasa el path del archivo y el tiempo de muestreo
     def __init__(self, data_path):
-        self.data = pd.read_csv(data_path)
-        if not {'Time', 't', 'G', 'T', 'V', 'C', 'F'}.issubset(self.data.columns):
+        self.__data = pd.read_csv(data_path)
+        if not {'Time', 't', 'G', 'T', 'V', 'C', 'F'}.issubset(self.__data.columns):
             raise FileError("csv file invalid")
         else:
-            self.sample_time_ms = self.data['t'][1] - self.data['t'][0]
-            self.clouds = None  # Lista de nubes donde almacenarlas
+            self.__sample_time_ms = self.__data['t'][1] - self.__data['t'][0]
+            self.__clouds_index = None  # Lista de nubes donde almacenar los index dentro de los datos
             self.__irradiance_p = None
             self.__irradiance_smooth = None
+
+    def get_raw_data(self):
+        return self.__data
 
     # --- BUSCAR NUBES ---
     #   -- Parametros
@@ -29,20 +32,20 @@ class DayData:
     #       derivate_interval -> intervalo en ms cada el que se calcula la derivada
     #       todo
     #       samples_between_clouds -> Muestras entre dos nubes consecutivas para que sea considerada una sola
-    #   
+    #
     #   -- Return -> lista de tuplas con inicio y final de cada nube
 
     def find_clouds_index(self, derivate_interval_ms, tolerance):
-        self.clouds = []
+        self.__clouds_index = []
 
         # La tolerancia va en valor absoluto
         tolerance = abs(tolerance)
 
         # Se filtra la señal primero. Aquí se podría poner un filtro u otro dependiendo de como se quiera filtrar
-        self.__irradiance_smooth = smoother(self.data['G'])
+        self.__irradiance_smooth = smoother(self.__data['G'])
 
         # Se le pasa a la derivada la señal filtrada, el intervalo cada el que se hace y el tiempo de muestreo
-        self.__irradiance_p = derivate(self.__irradiance_smooth, derivate_interval_ms, self.sample_time_ms)
+        self.__irradiance_p = derivate(self.__irradiance_smooth, derivate_interval_ms, self.__sample_time_ms)
 
         # --- DETECCIÓN DE NUBES ---
         cloud_start = None
@@ -53,26 +56,47 @@ class DayData:
             elif val > (0 - tolerance) and cloud_start is not None:
                 cloud_end = i  # Creo que no estaría incluído porque ya es mayor que 0, ese punto no se incluye
                 # Crear nube
-                self.clouds.append((cloud_start, cloud_end))
+                self.__clouds_index.append((cloud_start, cloud_end))
                 cloud_start = None
 
-        return self.clouds
+        return self.__clouds_index
+
+    # --- OBTENER MUESTRAS DE DATOS QUE FORMAN LAS NUBES ---
+    #   -- Parametros
+    #       NUNGUNO POR AHORA
+    #   -- Return -> DataFrame de pandas
+    def get_clouds_samples(self):
+        clouds_index = self.__clouds_index  # Variable local para estar mas comodo
+        clouds_samples = []
+
+        # Get keys
+        keys = self.__data.keys()
+        keys = np.delete(keys.values, [0, 1])
+
+        for cloud_index in clouds_index:
+            cloud_sample = self.__data.iloc[cloud_index[0]:cloud_index[1]].copy()
+            for key in keys:
+                cloud_sample.loc[:, key] = smoother(cloud_sample.loc[:, key])
+
+            clouds_samples.append(cloud_sample)
+
+        return clouds_samples
 
     def sort_clouds_g_decrease(self):
         # Aquí devolvemos una lista de nubes ordenada según la irradiancia
         # Ya se tiene la irradiancia filtrada ¿Hay que coger la fitlrada o la normal?
 
         # Array de 0 donde guardar los valores de irradiancia
-        cloud_g_decrease = np.zeros(len(self.clouds))
+        cloud_g_decrease = np.zeros(len(self.__clouds_index))
 
         # Se guardan los valores de salto de irradiancia entre nubes (se supone que es siempre positivo así)
-        for i, cloud in enumerate(self.clouds):
+        for i, cloud in enumerate(self.__clouds_index):
             cloud_g_decrease[i] = self.__irradiance_smooth[cloud[0]] - self.__irradiance_smooth[cloud[1]]
 
         # Queremos hacer una lista de nubes ordenada (como la del atributo y devolverla)
         # Para ordenar esa lista según el salto de irradiancia, hacemos lo siguiente
         # 1. Se une la lista de nubes con el valor del salto de irradiancia -> lista = [58, (0,5)]
-        zip_list = zip(cloud_g_decrease, self.clouds)
+        zip_list = zip(cloud_g_decrease, self.__clouds_index)
 
         # 2. Se ordenan ahora según el valor del decremento de la irradiancia (de mayor a menor)
         #       Sorted coge el primer elemento de la lista, en este caso el valor de irradiancia
@@ -89,16 +113,16 @@ class DayData:
         # Ya se tiene la irradiancia filtrada ¿Hay que coger la fitlrada o la normal?
 
         # Array de 0 donde guardar los valores de irradiancia
-        cloud_derivative_max = np.zeros(len(self.clouds))
+        cloud_derivative_max = np.zeros(len(self.__clouds_index))
 
         # Se guardan los valores de salto de irradiancia entre nubes (se supone que es siempre positivo así)
-        for i, cloud in enumerate(self.clouds):
+        for i, cloud in enumerate(self.__clouds_index):
             cloud_derivative_max[i] = np.amin(self.__irradiance_p[cloud[0]:cloud[1]])
 
         # Queremos hacer una lista de nubes ordenada (como la del atributo y devolverla)
         # Para ordenar esa lista según el salto de irradiancia, hacemos lo siguiente
         # 1. Se une la lista de nubes con el valor del salto de irradiancia -> lista = [58, (0,5)]
-        zip_list = zip(cloud_derivative_max, self.clouds)
+        zip_list = zip(cloud_derivative_max, self.__clouds_index)
 
         # 2. Se ordenan ahora según el valor del decremento de la irradiancia (de mayor a menor)
         #       Sorted coge el primer elemento de la lista, en este caso el valor de irradiancia
@@ -113,27 +137,28 @@ class DayData:
     def get_cloud_info(self, cloud):
 
         cloud = {
-            "Time": self.data['Time'][cloud[0]],
-            "ms start": self.data['t'][cloud[0]],
-            "Duration": self.data['t'][cloud[1]] - self.data['t'][cloud[0]],
-            "Irradiance decrease": self.__irradiance_smooth[cloud[0]] - self.__irradiance_smooth[cloud[1]],
-            "Max derivative value": np.amin(self.__irradiance_p[cloud[0]:cloud[1]])
+            "Time": self.__data['Time'][cloud[0]],
+            "ms start": self.__data['t'][cloud[0]],
+            "ms total": self.__data['t'][cloud[1]] - self.__data['t'][cloud[0]],
+            "ms sampl": self.__sample_time_ms,
+            "ΔG": self.__irradiance_smooth[cloud[0]] - self.__irradiance_smooth[cloud[1]],
+            "dG/dt mx": np.amin(self.__irradiance_p[cloud[0]:cloud[1]])
         }
         return cloud
 
     def plot_clouds(self):
         # Vamos a dibujar todas las nubes que hemos recogido. La longitud de t debe ser igual a la de la derivada
-        t = self.data['t']
+        t = self.__data['t']
         t = t[0:len(self.__irradiance_p)]
 
         # No sé bien como se comportan estas funciones. Por ahora funcionan bien pero me gustaria estudiarlas
         # todo
         fig, ax = plt.subplots()
-        plt.plot(t, self.data['G'][0:len(t)])
+        plt.plot(t, self.__data['G'][0:len(t)])
         ax.twinx()
         plt.plot(t, self.__irradiance_p, 'g-')
 
-        for cloud in self.clouds:
+        for cloud in self.__clouds_index:
             plt.fill_between(t, self.__irradiance_p, where=(t >= t[cloud[0]]) & (t <= t[cloud[1]]))
 
         plt.show()
@@ -142,8 +167,8 @@ class DayData:
         i_ini, i_fin = self.__calculate_interval(cloud, ini, fin)
 
         # filtrado de la frecuencia en ese tramo
-        f_smooth = smoother(self.data['F'][i_ini:i_fin])
-        t = self.data['t'][i_ini:i_fin]
+        f_smooth = smoother(self.__data['F'][i_ini:i_fin])
+        t = self.__data['t'][i_ini:i_fin]
 
         plt.plot(t, f_smooth)
         plt.show()
@@ -152,18 +177,15 @@ class DayData:
         i_ini, i_fin = self.__calculate_interval(cloud, ini, fin)
 
         # filtrado de la frecuencia en ese tramo
-        f_smooth = smoother(self.data['V'][i_ini:i_fin])
-        t = self.data['t'][i_ini:i_fin]
+        f_smooth = smoother(self.__data['V'][i_ini:i_fin])
+        t = self.__data['t'][i_ini:i_fin]
 
         plt.plot(t, f_smooth)
         plt.show()
 
-    def __get_sample_time(self):
-        pass
-
     def __calculate_interval(self, cloud, ini, fin):
-        ini = (ini * 1000) // self.sample_time_ms
-        fin = (fin * 1000) // self.sample_time_ms
+        ini = (ini * 1000) // self.__sample_time_ms
+        fin = (fin * 1000) // self.__sample_time_ms
 
         i_ini = cloud[0] - ini
         i_fin = cloud[1] + fin
@@ -171,7 +193,7 @@ class DayData:
         if i_ini < 0:
             i_ini = 0
 
-        if i_fin > len(self.data) - 1:
-            i_fin = len(self.data) - 1
+        if i_fin > len(self.__data) - 1:
+            i_fin = len(self.__data) - 1
 
         return i_ini, i_fin

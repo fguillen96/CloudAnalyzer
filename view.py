@@ -13,6 +13,7 @@ class View:
         # Control variables
         self.lbl_info_var = tk.StringVar(value='No csv detected')
         self.lbl_n_clouds_var = tk.StringVar(value='File not analyzed')
+        self.lbl_export_info_var = tk.StringVar(value='')
 
         # Buttons to be controlled (necessary in init)
         self.__btn_analyze = tk.Button(master=self.root, text="ANALYZE CLOUDS",
@@ -32,6 +33,8 @@ class View:
 
         # Separator
         sep_separator1 = ttk.Separator(self.root, orient=tk.HORIZONTAL)
+        sep_separator2 = ttk.Separator(self.root, orient=tk.HORIZONTAL)
+        sep_separator3 = ttk.Separator(self.root, orient=tk.HORIZONTAL)
 
         # Load csv button
         btn_load = tk.Button(master=self.root, text="LOAD CSV FILE", command=self.vc.btn_load_pressed)
@@ -42,14 +45,20 @@ class View:
         # Label to show number of clouds
         lbl_n_clouds = tk.Label(self.root, textvariable=self.lbl_n_clouds_var)
 
+        # Label to show exporting process
+        lbl_export_info = tk.Label(self.root, textvariable=self.lbl_export_info_var)
+
         # ---------- PACK ELEMENTS ----------
         lbl_image.pack(padx=30, pady=10)                                # Image
-        sep_separator1.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)  # Separator
+        sep_separator1.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)  # Separator
         btn_load.pack(fill=tk.BOTH, padx=10, pady=10)                   # Load button
         lbl_info.pack(fill=tk.BOTH, padx=10, pady=0, expand=False)      # Info label
+        sep_separator2.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)  # Separator
         self.__btn_analyze.pack(fill=tk.BOTH, padx=10, pady=10)         # Analyze button (as attribute)
         lbl_n_clouds.pack(fill=tk.BOTH, padx=10, pady=0)                # Number of clouds label
+        sep_separator3.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)  # Separator
         self.__btn_export_clouds.pack(fill=tk.BOTH, padx=10, pady=10)   # Export button (as attribute)
+        lbl_export_info.pack(fill=tk.BOTH, padx=10, pady=0)
 
     def disable_btn_analyze(self):
         self.__btn_analyze.config(state="disabled")

@@ -1,6 +1,7 @@
 from view import View
 from model import Model
-import csv
+from pandas import ExcelWriter
+import pandas as pd
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from utils.cloud_utils import FileError
 
@@ -42,10 +43,17 @@ class Controller():
 
     def btn_export_pressed(self):
         cloud_list_info = self.model.get_clouds_info()
-        filepath = asksaveasfilename(defaultextension="csv", filetypes=[("csv files", "*.csv"), ("All Files", "*.*")],)
+        clouds_samples = self.model.get_clouds_samples()
+        filepath = asksaveasfilename(defaultextension="xlsx",
+                                     filetypes=[("Excel files", "*.xlsx"), ("All Files", "*.*")])
         if filepath:
-            with open(filepath, 'a', newline='') as f:
-                fieldnames = cloud_list_info[0].keys()
-                thewriter = csv.DictWriter(f, fieldnames=fieldnames)
-                thewriter.writeheader()
-                thewriter.writerows(cloud_list_info)
+            self.view.lbl_export_info_var.set("Exporting...")
+            self.view.root.update_idletasks()
+            with ExcelWriter(filepath) as writer:
+                for i, cloud in enumerate(cloud_list_info):
+                    cloud = pd.DataFrame.from_records([cloud])
+                    cloud.to_excel(writer, sheet_name='Cloud ' + str(i), index=False)
+                    clouds_samples[i].to_excel(writer, sheet_name='Cloud ' + str(i), startrow=5, index=False)
+            self.view.lbl_export_info_var.set("Succesfully exported!")
+        else:
+            self.view.lbl_export_info_var.set("Choose filepath!")

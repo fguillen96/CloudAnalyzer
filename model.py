@@ -14,7 +14,7 @@ class Model():
     # Send data to controller again
     def analyze(self):
         self.__cloud_list = []
-        self.__cloud_list = self.__data.find_clouds(500, 4)
+        self.__cloud_list = self.__data.find_clouds_index(500, 4)
         self.vc.n_clouds_changed_delegate()
 
     def get_clouds_info(self):
@@ -22,6 +22,9 @@ class Model():
         for cloud in self.__cloud_list:
             self.__cloud_list_info.append(self.__data.get_cloud_info(cloud))
         return self.__cloud_list_info
+
+    def get_clouds_samples(self):
+        return self.__data.get_clouds_samples()
 
     # Setters and getters
     def get_n_clouds(self):

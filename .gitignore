@@ -6,4 +6,4 @@ CloudAnalyzer.code-workspace
 utils/__pycache__/
 examples
 __pycache__
-utils/examples
+examples

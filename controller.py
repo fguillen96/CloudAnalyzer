@@ -41,9 +41,13 @@ class Controller():
         n_clouds = self.model.get_n_clouds()
         self.view.lbl_n_clouds_var.set(str(n_clouds) + " clouds found")
         self.view.enable_btn_export_clouds()
+        self.view.enable_btn_plot_clouds()
+
+    def btn_plot_clouds_pressed(self):
+        self.model.plot_clouds()
 
     def btn_export_pressed(self):
-        cloud_list_info = self.model.get_clouds_info()
+        clouds_info = self.model.get_clouds_info()
         clouds_samples = self.model.get_clouds_samples()
         filepath = asksaveasfilename(defaultextension="xlsx",
                                      filetypes=[("Excel files", "*.xlsx"), ("All Files", "*.*")])
@@ -51,10 +55,9 @@ class Controller():
             self.view.lbl_export_info_var.set("Exporting...")
             self.view.root.update_idletasks()
             with ExcelWriter(filepath) as writer:
-                for i, cloud in enumerate(cloud_list_info):
-                    cloud = pd.DataFrame.from_records([cloud])
-                    cloud.to_excel(writer, sheet_name='Cloud ' + str(i), index=False)
-                    clouds_samples[i].to_excel(writer, sheet_name='Cloud ' + str(i), startrow=5, index=False)
+                clouds_info.to_excel(writer, sheet_name='Main', index=False)
+                for i, cloud_sample in enumerate(clouds_samples):
+                    cloud_sample.to_excel(writer, sheet_name='Cloud ' + str(i), index=False)
             self.view.lbl_export_info_var.set("Succesfully exported!")
         else:
             self.view.lbl_export_info_var.set("Choose filepath!")

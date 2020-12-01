@@ -17,11 +17,11 @@ class Model():
         self.__cloud_list = self.__data.find_clouds_index(500, 4)
         self.vc.n_clouds_changed_delegate()
 
+    def plot_clouds(self):
+        self.__data.plot_clouds();
+
     def get_clouds_info(self):
-        self.__cloud_list_info = []
-        for cloud in self.__cloud_list:
-            self.__cloud_list_info.append(self.__data.get_cloud_info(cloud))
-        return self.__cloud_list_info
+        return self.__data.get_clouds_info()
 
     def get_clouds_samples(self):
         return self.__data.get_clouds_samples()

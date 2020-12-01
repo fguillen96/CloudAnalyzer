@@ -64,7 +64,7 @@ class DayData:
     # --- OBTENER MUESTRAS DE DATOS QUE FORMAN LAS NUBES ---
     #   -- Parametros
     #       NUNGUNO POR AHORA
-    #   -- Return -> DataFrame de pandas
+    #   -- Return ->  Lista de DataFrame de pandas
     def get_clouds_samples(self):
         clouds_index = self.__clouds_index  # Variable local para estar mas comodo
         clouds_samples = []
@@ -81,6 +81,31 @@ class DayData:
             clouds_samples.append(cloud_sample)
 
         return clouds_samples
+
+    def get_cloud_info(self, cloud):
+
+        cloud = {
+            "Time": self.__data['Time'][cloud[0]],
+            "ms start": self.__data['t'][cloud[0]],
+            "ms total": self.__data['t'][cloud[1]] - self.__data['t'][cloud[0]],
+            "ms sampl": self.__sample_time_ms,
+            "ΔG": self.__irradiance_smooth[cloud[0]] - self.__irradiance_smooth[cloud[1]],
+            "dG/dt mx": np.amin(self.__irradiance_p[cloud[0]:cloud[1]])
+        }
+        return cloud
+
+    # --- OBTENER INFO DE TODAS LAS NUBES COMO LISTA DE DATAFRAMES DE PANDAS ---
+    #   -- Parametros
+    #       NUNGUNO POR AHORA
+    #   -- Return ->  Lista de DataFrame de pandas
+    def get_clouds_info(self):
+        cloud_list_info = []
+        for i, cloud in enumerate(self.__clouds_index):
+            cloud_dic = {"Cloud": i} 
+            cloud_info = self.get_cloud_info(cloud)
+            cloud_dic.update(cloud_info)
+            cloud_list_info.append(cloud_dic)
+        return pd.DataFrame.from_records(cloud_list_info)
 
     def sort_clouds_g_decrease(self):
         # Aquí devolvemos una lista de nubes ordenada según la irradiancia
@@ -133,18 +158,6 @@ class DayData:
         clouds_sort_max_derivative = [i for _, i in sort_list]
 
         return clouds_sort_max_derivative
-
-    def get_cloud_info(self, cloud):
-
-        cloud = {
-            "Time": self.__data['Time'][cloud[0]],
-            "ms start": self.__data['t'][cloud[0]],
-            "ms total": self.__data['t'][cloud[1]] - self.__data['t'][cloud[0]],
-            "ms sampl": self.__sample_time_ms,
-            "ΔG": self.__irradiance_smooth[cloud[0]] - self.__irradiance_smooth[cloud[1]],
-            "dG/dt mx": np.amin(self.__irradiance_p[cloud[0]:cloud[1]])
-        }
-        return cloud
 
     def plot_clouds(self):
         # Vamos a dibujar todas las nubes que hemos recogido. La longitud de t debe ser igual a la de la derivada

@@ -28,18 +28,14 @@ class DayData:
     # --- BUSCAR NUBES ---
     #   -- Parametros
     #       irradiance_p -> derivada de la irradiancia
-    #       tolerance -> Margen de tolerancia del valor de la derivada por debajo de 0 para detección de nube
+    #       derivative_treshold -> Margen de tolerancia del valor de la derivada por debajo de 0 para detección de nube
     #       derivate_interval -> intervalo en ms cada el que se calcula la derivada
-    #       todo
     #       samples_between_clouds -> Muestras entre dos nubes consecutivas para que sea considerada una sola
     #
     #   -- Return -> lista de tuplas con inicio y final de cada nube
 
-    def find_clouds_index(self, derivate_interval_ms, tolerance):
+    def find_clouds_index(self, derivate_interval_ms, irradiance_treshold,  derivative_treshold, time_btw_clouds):
         self.__clouds_index = []
-
-        # La tolerancia va en valor absoluto
-        tolerance = abs(tolerance)
 
         # Se filtra la señal primero. Aquí se podría poner un filtro u otro dependiendo de como se quiera filtrar
         self.__irradiance_smooth = smoother(self.__data['G'])
@@ -48,16 +44,32 @@ class DayData:
         self.__irradiance_p = derivate(self.__irradiance_smooth, derivate_interval_ms, self.__sample_time_ms)
 
         # --- DETECCIÓN DE NUBES ---
-        cloud_start = None
-        cloud_end = None
+        cloud_start = None      # Para guardar el index de inicio de nube
+        cloud_end = None        # Para guardar el index de final de nube
+        sample_counter = 0      # Contador de muestras
+        state = 1
+        samples_btw_clouds = time_btw_clouds // self.__sample_time_ms
+
         for i, val in enumerate(self.__irradiance_p):
-            if val < (0 - tolerance) and cloud_start is None:
-                cloud_start = i
-            elif val > (0 - tolerance) and cloud_start is not None:
-                cloud_end = i  # Creo que no estaría incluído porque ya es mayor que 0, ese punto no se incluye
-                # Crear nube
-                self.__clouds_index.append((cloud_start, cloud_end))
-                cloud_start = None
+            sample_counter += 1
+            if state == 1:
+                if val <= derivative_treshold and cloud_start is None:
+                    cloud_start = i
+                elif val > (-4) and cloud_start is not None:
+                    cloud_end = i
+                    state = 2
+                    sample_counter = 0
+
+            elif state == 2:
+                if sample_counter <= samples_btw_clouds and val <= derivative_treshold:
+                    state = 1
+                elif sample_counter >= samples_btw_clouds:
+                    irradiance_decrement = self.__irradiance_smooth[cloud_start] - self.__irradiance_smooth[cloud_end]
+                    if (irradiance_decrement >= irradiance_treshold):
+                        self.__clouds_index.append((cloud_start, cloud_end))
+                    cloud_start = None
+                    cloud_end = None
+                    state = 1
 
         return self.__clouds_index
 
@@ -101,11 +113,28 @@ class DayData:
     def get_clouds_info(self):
         cloud_list_info = []
         for i, cloud in enumerate(self.__clouds_index):
-            cloud_dic = {"Cloud": i} 
+            cloud_dic = {"Cloud": i}
             cloud_info = self.get_cloud_info(cloud)
             cloud_dic.update(cloud_info)
             cloud_list_info.append(cloud_dic)
         return pd.DataFrame.from_records(cloud_list_info)
+
+    def plot_clouds(self):
+        # Vamos a dibujar todas las nubes que hemos recogido. La longitud de t debe ser igual a la de la derivada
+        t = self.__data['t']
+        t = t[0:len(self.__irradiance_p)]
+
+        # No sé bien como se comportan estas funciones. Por ahora funcionan bien pero me gustaria estudiarlas
+        # todo
+        fig, ax = plt.subplots()
+        plt.plot(t, self.__irradiance_smooth[0:len(t)])
+        ax.twinx()
+        plt.plot(t, self.__irradiance_p, 'g-')
+
+        for cloud in self.__clouds_index:
+            plt.fill_between(t, self.__irradiance_p, where=(t >= t[cloud[0]]) & (t <= t[cloud[1]]))
+
+        plt.show()
 
     def sort_clouds_g_decrease(self):
         # Aquí devolvemos una lista de nubes ordenada según la irradiancia
@@ -158,23 +187,6 @@ class DayData:
         clouds_sort_max_derivative = [i for _, i in sort_list]
 
         return clouds_sort_max_derivative
-
-    def plot_clouds(self):
-        # Vamos a dibujar todas las nubes que hemos recogido. La longitud de t debe ser igual a la de la derivada
-        t = self.__data['t']
-        t = t[0:len(self.__irradiance_p)]
-
-        # No sé bien como se comportan estas funciones. Por ahora funcionan bien pero me gustaria estudiarlas
-        # todo
-        fig, ax = plt.subplots()
-        plt.plot(t, self.__data['G'][0:len(t)])
-        ax.twinx()
-        plt.plot(t, self.__irradiance_p, 'g-')
-
-        for cloud in self.__clouds_index:
-            plt.fill_between(t, self.__irradiance_p, where=(t >= t[cloud[0]]) & (t <= t[cloud[1]]))
-
-        plt.show()
 
     def plot_frequency(self, cloud, ini, fin):
         i_ini, i_fin = self.__calculate_interval(cloud, ini, fin)

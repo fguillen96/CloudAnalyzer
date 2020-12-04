@@ -16,85 +16,148 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-class View:
-    def __init__(self, vc):
-        self.vc = vc
-        self.root = tk.Tk()
-        self.root.title("Cloud Analyzer")
-        self.root.iconbitmap(resource_path('resources\cloud_ico.ico'))
+class MyFrame(tk.LabelFrame):
+    def disable_frame(self):
+        def function(frame):
+            for child in frame.winfo_children():
+                wtype = child.winfo_class()
+                if wtype not in ('Frame', 'Labelframe', 'TFrame', 'TLabelframe'):
+                    child.configure(state='disable')
+                else:
+                    function(child)  # Función recursiva
 
-        # Control variables
+        frame = self
+        function(frame)
+
+    def enable_frame(self):
+        def function(frame):
+            for child in frame.winfo_children():
+                wtype = child.winfo_class()
+                if wtype not in ('Frame', 'Labelframe', 'TFrame', 'TLabelframe'):
+                    child.configure(state='normal')
+                else:
+                    function(child)  # Función recursiva
+
+        frame = self
+        function(frame)
+
+
+class LoadCsvFrame(MyFrame):
+    def __init__(self, master, controller):
+        super().__init__(master, labelanchor='nw', text='Loading csv data')
+        self.controller = controller
+
+        # Variable de control para usar en etiqueta
         self.lbl_info_var = tk.StringVar(value='No csv detected')
+
+        # Botón para cargar csv
+        btn_load = ttk.Button(master=self, text="LOAD CSV FILE", command=self.controller.btn_load_pressed)
+
+        # Etiqueta para mostrar info
+        lbl_info = tk.Label(self, textvariable=self.lbl_info_var, wraplength=225)
+
+        # Pack elements
+        btn_load.pack(fill=tk.BOTH, padx=10, pady=10)        # Load button
+        lbl_info.pack(padx=10, pady=10)                         # Info label
+
+
+class AnalyzeFrame(MyFrame):
+    def __init__(self, master, controller):
+        super().__init__(master,  labelanchor='nw', text='Analyzing  Clouds',)
+        self.controller = controller
         self.lbl_n_clouds_var = tk.StringVar(value='File not analyzed')
+        self.__load_elements()
+
+    def __load_elements(self):
+        # Combobox para elegir umbral de irradiancia. Se pone dentro de un frame nuevo
+        frame_lbl_irradiance = ttk.LabelFrame(self, labelanchor='nw', text='Irradiance Treshold (W/m2)')
+        self.ent_irradiance_treshold = ttk.Combobox(master=frame_lbl_irradiance,
+                                                    values=('100', '150', '200', '250',
+                                                            '300', '350', '400', '450', '500'))
+        self.ent_irradiance_treshold.pack(fill=tk.BOTH, padx=10, pady=10)
+
+        # Combobox para elegir umbral de la derivada. Se pone dentro de un nuevo frame también
+        frame_lbl_derivative = ttk.LabelFrame(self, labelanchor='nw', text='Derivative Treshold')
+        self.ent_derivative_treshold = ttk.Combobox(master=frame_lbl_derivative,
+                                                    values=('-4', '-5', '-6', '-7', '-8', '-9', '-10'))
+        self.ent_derivative_treshold.pack(fill=tk.BOTH, padx=10, pady=10)
+
+        frame_lbl_time = ttk.LabelFrame(self, labelanchor='nw', text='Time between clouds (ms)')
+        var = tk.IntVar(value=500)
+        self.ent_time_btw_clouds = ttk.Spinbox(master=frame_lbl_time, from_=500, to=5000,
+                                               textvariable=var, increment=500)
+        self.ent_time_btw_clouds.pack(fill=tk.BOTH, padx=10, pady=10)
+
+        # Boton
+        btn_analyze = ttk.Button(master=self, text="ANALYZE CLOUDS", command=self.controller.btn_analyze_pressed)
+
+        # Etiqueta que muestra la informacion
+        lbl_n_clouds = tk.Label(self, textvariable=self.lbl_n_clouds_var)
+
+        # Pack elements
+        frame_lbl_irradiance.pack(fill=tk.BOTH, padx=10, pady=10)
+        frame_lbl_derivative.pack(fill=tk.BOTH, padx=10, pady=10)
+        frame_lbl_time.pack(fill=tk.BOTH, padx=10, pady=10)
+        btn_analyze.pack(fill=tk.BOTH, padx=10, pady=10)             # Analyze button (as attribute)
+        lbl_n_clouds.pack(fill=tk.BOTH, padx=10, pady=10)             # Number of clouds label
+
+
+class DataFrame(MyFrame):
+    def __init__(self, master, controller):
+        super().__init__(master,  labelanchor='nw', text='Showing Results')
+        self.controller = controller
         self.lbl_export_info_var = tk.StringVar(value='')
-        self.ent_check_button_var = tk.IntVar()  # Holds a boolean, returns 0 for False and 1 for True
+        self.__load_elements()
 
-        # Buttons to be controlled (necessary in init)
-        self.__btn_analyze = tk.Button(master=self.root, text="ANALYZE CLOUDS",
-                                       command=self.vc.btn_analyze_pressed, state="disabled")
-        self.__btn_export_clouds = tk.Button(master=self.root, text="EXPORT CLOUDS CSV",
-                                             command=self.vc.btn_export_pressed, state="disabled")
+    def __load_elements(self):
+        # Etiqueta para mostrar info
+        lbl_export_info = tk.Label(self, textvariable=self.lbl_export_info_var)
 
-        self.__btn_plot_clouds = tk.Button(master=self.root, text="PLOT CLOUDS DATA",
-                                           command=self.vc.btn_plot_clouds_pressed, state="disabled")
+        # Botón exportar
+        btn_export_clouds = ttk.Button(master=self, text="EXPORT CLOUDS CSV",
+                                       command=self.controller.btn_export_pressed)
 
-        # Create widgets
-        self.__load_view()
+        # Botón plot clouds
+        btn_plot_clouds = ttk.Button(master=self, text="PLOT CLOUDS", command=self.controller.btn_plot_clouds_pressed)
 
-    def __load_view(self):
-        # ---------- CREATING ELEMENTS NOT NECESSARY AS ATTRIBUTES ----------
+        # Pack elements
+        btn_plot_clouds.pack(fill=tk.BOTH, padx=10, pady=10)         # Plot clouds button (as attribute)
+        btn_export_clouds.pack(fill=tk.BOTH, padx=10, pady=10)       # Export button (as attribute)
+        lbl_export_info.pack(fill=tk.BOTH, padx=10, pady=10)
+
+
+class View(tk.Tk):
+    def __init__(self, controller):
+        super().__init__()
+        self.controller = controller
+
+        self.title("Cloud Analyzer")
+        self.resizable(False, False)
+        self.iconbitmap(resource_path('resources/cloud_ico.ico'))
+
+        self.__load_elements()
+        self.disable_frames()
+
+    def __load_elements(self):
         # Image
-        cloud_image = tk.PhotoImage(file=resource_path('resources\cloud2.png'))
-        lbl_image = tk.Label(self.root, image=cloud_image, anchor="center")
+        cloud_image = tk.PhotoImage(file=resource_path('resources/cloud2.png'))
+        lbl_image = tk.Label(self, image=cloud_image, anchor="center")
         lbl_image.image = cloud_image
 
-        # Separator
-        sep_separator1 = ttk.Separator(self.root, orient=tk.HORIZONTAL)
-        sep_separator2 = ttk.Separator(self.root, orient=tk.HORIZONTAL)
-        sep_separator3 = ttk.Separator(self.root, orient=tk.HORIZONTAL)
-
-        # Load csv button
-        btn_load = tk.Button(master=self.root, text="LOAD CSV FILE", command=self.vc.btn_load_pressed)
-
-        # Info label
-        lbl_info = tk.Label(self.root, textvariable=self.lbl_info_var)
-
-        # Label to show number of clouds
-        lbl_n_clouds = tk.Label(self.root, textvariable=self.lbl_n_clouds_var)
-
-        # Label to show exporting process
-        lbl_export_info = tk.Label(self.root, textvariable=self.lbl_export_info_var)
+        # Program principal frames
+        self.frame_load = LoadCsvFrame(self, self.controller)
+        self.frame_analyze = AnalyzeFrame(self, self.controller)
+        self.frame_data = DataFrame(self, self.controller)
 
         # ---------- PACK ELEMENTS ----------
-        lbl_image.pack(padx=30, pady=10)                                    # Image
-        sep_separator1.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)     # Separator
-        btn_load.pack(fill=tk.BOTH, padx=10, pady=10)                       # Load button
-        lbl_info.pack(fill=tk.BOTH, padx=10, pady=0, expand=False)          # Info label
-        sep_separator2.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)     # Separator
-        self.__btn_analyze.pack(fill=tk.BOTH, padx=10, pady=10)             # Analyze button (as attribute)
-        lbl_n_clouds.pack(fill=tk.BOTH, padx=10, pady=0)                    # Number of clouds label
-        sep_separator3.pack(fill=tk.BOTH, expand=True, padx=5, pady=10)     # Separator
-        self.__btn_plot_clouds.pack(fill=tk.BOTH, padx=10, pady=10)         # Plot clouds button (as attribute)
-        self.__btn_export_clouds.pack(fill=tk.BOTH, padx=10, pady=10)       # Export button (as attribute)
-        lbl_export_info.pack(fill=tk.BOTH, padx=10, pady=0)
+        lbl_image.pack(padx=50, pady=10)                 # Image
+        self.frame_load.pack(fill=tk.BOTH, padx=10, pady=10)
+        self.frame_analyze.pack(fill=tk.BOTH, padx=10, pady=10)
+        self.frame_data.pack(fill=tk.BOTH, padx=10, pady=10)
 
-    def disable_btn_analyze(self):
-        self.__btn_analyze.config(state="disabled")
-
-    def enable_btn_analyze(self):
-        self.__btn_analyze.config(state="normal")
-
-    def disable_btn_export_clouds(self):
-        self.__btn_export_clouds.config(state="disabled")
-
-    def enable_btn_export_clouds(self):
-        self.__btn_export_clouds.config(state="normal")
-
-    def disable_btn_plot_clouds(self):
-        self.__btn_plot_clouds.config(state="disabled")
-
-    def enable_btn_plot_clouds(self):
-        self.__btn_plot_clouds.config(state="normal")
+    def disable_frames(self):
+        self.frame_analyze.disable_frame()
+        self.frame_data.disable_frame()
 
     def csv_error(self):
         mb.showerror("Error", "Invalid csv file.")

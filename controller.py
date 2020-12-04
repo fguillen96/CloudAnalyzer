@@ -1,7 +1,6 @@
 from view import View
 from model import Model
 from pandas import ExcelWriter
-import pandas as pd
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from utils.cloud_utils import FileError
 
@@ -10,38 +9,36 @@ class Controller():
     def __init__(self):
         self.model = Model(self)    # initializes the model
         self.view = View(self)      # initializes the view
-        self.view.root.configure()
-        self.view.root.mainloop()
+        self.view.mainloop()
 
     # ---------- EVENT HANDLERS ----------
     # Load button pressed. Open csv file
     def btn_load_pressed(self):
-        self.view.disable_btn_analyze()
-        self.view.disable_btn_export_clouds()
-
+        self.view.disable_frames()
         filepath = askopenfilename(filetypes=[("Text Files", "*.csv"), ("All Files", "*.*")])
         if not filepath:
-            self.view.lbl_info_var.set("No csv selected")
+            self.view.frame_load.lbl_info_var.set("No csv selected")
         else:
-            self.view.lbl_n_clouds_var.set('File not analyzed')
-            self.view.lbl_info_var.set(filepath)
+            self.view.frame_load.lbl_info_var.set(filepath)
             try:
                 self.model.instanciate(filepath)
-                self.view.enable_btn_analyze()
+                self.view.frame_analyze.enable_frame()
             except FileError:
                 self.view.csv_error()
 
     # Analyze button pressed. Get number of clouds
     def btn_analyze_pressed(self):
-        self.view.lbl_n_clouds_var.set("Analyzing...")
-        self.view.root.update_idletasks()
-        self.model.analyze()
+        self.view.frame_analyze.lbl_n_clouds_var.set("Analyzing...")
+        self.view.update_idletasks()
 
-    def n_clouds_changed_delegate(self):
-        n_clouds = self.model.get_n_clouds()
-        self.view.lbl_n_clouds_var.set(str(n_clouds) + " clouds found")
-        self.view.enable_btn_export_clouds()
-        self.view.enable_btn_plot_clouds()
+        irradiance_treshold = int(self.view.frame_analyze.ent_irradiance_treshold.get())
+        derivative_treshold = int(self.view.frame_analyze.ent_derivative_treshold.get())
+        time_btw_clouds = int(self.view.frame_analyze.ent_time_btw_clouds.get())
+
+        n_clouds = self.model.analyze_clouds(irradiance_treshold, derivative_treshold, time_btw_clouds)
+
+        self.view.frame_analyze.lbl_n_clouds_var.set(str(n_clouds) + " clouds found")
+        self.view.frame_data.enable_frame()
 
     def btn_plot_clouds_pressed(self):
         self.model.plot_clouds()
@@ -52,12 +49,12 @@ class Controller():
         filepath = asksaveasfilename(defaultextension="xlsx",
                                      filetypes=[("Excel files", "*.xlsx"), ("All Files", "*.*")])
         if filepath:
-            self.view.lbl_export_info_var.set("Exporting...")
-            self.view.root.update_idletasks()
+            self.view.frame_data.lbl_export_info_var.set("Exporting...")
+            self.view.update_idletasks()
             with ExcelWriter(filepath) as writer:
                 clouds_info.to_excel(writer, sheet_name='Main', index=False)
                 for i, cloud_sample in enumerate(clouds_samples):
                     cloud_sample.to_excel(writer, sheet_name='Cloud ' + str(i), index=False)
-            self.view.lbl_export_info_var.set("Succesfully exported!")
+            self.view.frame_data.lbl_export_info_var.set("Succesfully exported!")
         else:
-            self.view.lbl_export_info_var.set("Choose filepath!")
+            self.view.frame_data.lbl_export_info_var.set("Choose filepath!")

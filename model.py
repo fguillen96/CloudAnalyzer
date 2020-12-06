@@ -18,6 +18,9 @@ class Model():
                                                           derivative_treshold, time_btw_clouds)
         return len(self.__cloud_list)
 
+    def get_sample_time(self):
+        return self.__data.get_sample_time()
+
     def plot_clouds(self):
         self.__data.plot_clouds()
 

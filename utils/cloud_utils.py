@@ -14,7 +14,7 @@ class DayData:
     # Constructor de la clase. Se le pasa el path del archivo y el tiempo de muestreo
     def __init__(self, data_path):
         self.__data = pd.read_csv(data_path)
-        if not {'Time', 't', 'G', 'T', 'V', 'C', 'F'}.issubset(self.__data.columns):
+        if not {'Time', 't', 'G', 'T', 'V', 'I', 'f'}.issubset(self.__data.columns):
             raise FileError("csv file invalid")
         else:
             self.__sample_time_ms = self.__data['t'][1] - self.__data['t'][0]
@@ -87,6 +87,8 @@ class DayData:
 
         for cloud_index in clouds_index:
             cloud_sample = self.__data.iloc[cloud_index[0]:cloud_index[1]].copy()
+
+            # Esto es para filtrar todas las muestras que no sean ni Time ni t
             for key in keys:
                 cloud_sample.loc[:, key] = smoother(cloud_sample.loc[:, key])
 
@@ -105,6 +107,9 @@ class DayData:
             "dG/dt mx": np.amin(self.__irradiance_p[cloud[0]:cloud[1]])
         }
         return cloud
+    
+    def get_sample_time(self):
+        return self.__sample_time_ms
 
     # --- OBTENER INFO DE TODAS LAS NUBES COMO LISTA DE DATAFRAMES DE PANDAS ---
     #   -- Parametros
@@ -192,7 +197,7 @@ class DayData:
         i_ini, i_fin = self.__calculate_interval(cloud, ini, fin)
 
         # filtrado de la frecuencia en ese tramo
-        f_smooth = smoother(self.__data['F'][i_ini:i_fin])
+        f_smooth = smoother(self.__data['f'][i_ini:i_fin])
         t = self.__data['t'][i_ini:i_fin]
 
         plt.plot(t, f_smooth)

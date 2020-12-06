@@ -3,6 +3,7 @@ from model import Model
 from pandas import ExcelWriter
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from utils.cloud_utils import FileError
+import ntpath
 
 
 class Controller():
@@ -16,15 +17,23 @@ class Controller():
     def btn_load_pressed(self):
         self.view.disable_frames()
         filepath = askopenfilename(filetypes=[("Text Files", "*.csv"), ("All Files", "*.*")])
+        filepath_error = "\nNo csv file selected\n"
         if not filepath:
-            self.view.frame_load.lbl_info_var.set("No csv selected")
+            self.view.frame_load.lbl_info_var.set(filepath_error)
         else:
-            self.view.frame_load.lbl_info_var.set(filepath)
             try:
                 self.model.instanciate(filepath)
-                self.view.frame_analyze.enable_frame()
             except FileError:
                 self.view.csv_error()
+                self.view.frame_load.lbl_info_var.set(filepath_error)
+                return
+
+            self.view.frame_analyze.enable_frame()
+            file_name = ntpath.basename(filepath)
+            sample_time = self.model.get_sample_time()
+
+            string = "* File name: " + file_name + "\n\n* Sample time (ms): " + str(sample_time)
+            self.view.frame_load.lbl_info_var.set(string)
 
     # Analyze button pressed. Get number of clouds
     def btn_analyze_pressed(self):

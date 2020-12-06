@@ -17,6 +17,8 @@ def resource_path(relative_path):
 
 
 class MyFrame(tk.LabelFrame):
+    element_pad = 5
+
     def disable_frame(self):
         def function(frame):
             for child in frame.winfo_children():
@@ -44,49 +46,56 @@ class MyFrame(tk.LabelFrame):
 
 class LoadCsvFrame(MyFrame):
     def __init__(self, master, controller):
-        super().__init__(master, labelanchor='nw', text='Loading csv data')
+        super().__init__(master)
+        self.config(labelanchor='nw', text='Loading csv data', padx=self.element_pad, pady=self.element_pad)
         self.controller = controller
 
         # Variable de control para usar en etiqueta
-        self.lbl_info_var = tk.StringVar(value='No csv detected')
+        self.lbl_info_var = tk.StringVar(value="\nNo csv file selected\n")
+        self. __load_elements()
 
+    def __load_elements(self):
         # Botón para cargar csv
         btn_load = ttk.Button(master=self, text="LOAD CSV FILE", command=self.controller.btn_load_pressed)
+        btn_load.pack(fill=tk.BOTH, padx=self.element_pad, pady=self.element_pad)
 
-        # Etiqueta para mostrar info
-        lbl_info = tk.Label(self, textvariable=self.lbl_info_var, wraplength=225)
+        # ----- FRAME PARA MOSTRAR INFO CSV -----
+        frame_csv_info = ttk.LabelFrame(self, labelanchor='nw', text='File info', padding=self.element_pad)
+        frame_csv_info.pack(fill=tk.BOTH, padx=self.element_pad, pady=self.element_pad)
 
-        # Pack elements
-        btn_load.pack(fill=tk.BOTH, padx=10, pady=10)        # Load button
-        lbl_info.pack(padx=10, pady=10)                         # Info label
+        lbl_info = tk.Label(frame_csv_info, textvariable=self.lbl_info_var, width=20, anchor=tk.W, justify=tk.LEFT)
+        lbl_info.pack(fill=tk.BOTH)
 
 
 class AnalyzeFrame(MyFrame):
     def __init__(self, master, controller):
-        super().__init__(master,  labelanchor='nw', text='Analyzing  Clouds',)
+        super().__init__(master)
+        self.config(labelanchor='nw', text='Analyzing  Clouds', padx=self.element_pad, pady=self.element_pad)
         self.controller = controller
         self.lbl_n_clouds_var = tk.StringVar(value='File not analyzed')
         self.__load_elements()
 
     def __load_elements(self):
         # Combobox para elegir umbral de irradiancia. Se pone dentro de un frame nuevo
-        frame_lbl_irradiance = ttk.LabelFrame(self, labelanchor='nw', text='Irradiance Treshold (W/m2)')
+        frame_lbl_irradiance = ttk.LabelFrame(self, labelanchor='nw',
+                                              text='Irradiance Treshold (W/m2)', padding=self.element_pad)
         self.ent_irradiance_treshold = ttk.Combobox(master=frame_lbl_irradiance,
                                                     values=('100', '150', '200', '250',
                                                             '300', '350', '400', '450', '500'))
-        self.ent_irradiance_treshold.pack(fill=tk.BOTH, padx=10, pady=10)
+        self.ent_irradiance_treshold.pack(fill=tk.BOTH, padx=self.element_pad, pady=self.element_pad)
 
         # Combobox para elegir umbral de la derivada. Se pone dentro de un nuevo frame también
-        frame_lbl_derivative = ttk.LabelFrame(self, labelanchor='nw', text='Derivative Treshold')
+        frame_lbl_derivative = ttk.LabelFrame(self, labelanchor='nw', text='Derivative Treshold', padding=5)
         self.ent_derivative_treshold = ttk.Combobox(master=frame_lbl_derivative,
                                                     values=('-4', '-5', '-6', '-7', '-8', '-9', '-10'))
-        self.ent_derivative_treshold.pack(fill=tk.BOTH, padx=10, pady=10)
+        self.ent_derivative_treshold.pack(fill=tk.BOTH, padx=self.element_pad, pady=self.element_pad)
 
-        frame_lbl_time = ttk.LabelFrame(self, labelanchor='nw', text='Time between clouds (ms)')
+        frame_lbl_time = ttk.LabelFrame(self, labelanchor='nw', text='Time between clouds (ms)',
+                                        padding=self.element_pad)
         var = tk.IntVar(value=500)
         self.ent_time_btw_clouds = ttk.Spinbox(master=frame_lbl_time, from_=500, to=5000,
                                                textvariable=var, increment=500)
-        self.ent_time_btw_clouds.pack(fill=tk.BOTH, padx=10, pady=10)
+        self.ent_time_btw_clouds.pack(fill=tk.BOTH, padx=self.element_pad, pady=self.element_pad)
 
         # Boton
         btn_analyze = ttk.Button(master=self, text="ANALYZE CLOUDS", command=self.controller.btn_analyze_pressed)
@@ -95,35 +104,39 @@ class AnalyzeFrame(MyFrame):
         lbl_n_clouds = tk.Label(self, textvariable=self.lbl_n_clouds_var)
 
         # Pack elements
-        frame_lbl_irradiance.pack(fill=tk.BOTH, padx=10, pady=10)
-        frame_lbl_derivative.pack(fill=tk.BOTH, padx=10, pady=10)
-        frame_lbl_time.pack(fill=tk.BOTH, padx=10, pady=10)
-        btn_analyze.pack(fill=tk.BOTH, padx=10, pady=10)             # Analyze button (as attribute)
-        lbl_n_clouds.pack(fill=tk.BOTH, padx=10, pady=10)             # Number of clouds label
+        frame_lbl_irradiance.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
+        frame_lbl_derivative.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
+        frame_lbl_time.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
+        btn_analyze.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
+        lbl_n_clouds.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
 
 
 class DataFrame(MyFrame):
     def __init__(self, master, controller):
-        super().__init__(master,  labelanchor='nw', text='Showing Results')
+        super().__init__(master)
+        self.config(labelanchor='nw', text='Showing Results', padx=self.element_pad, pady=self.element_pad)
         self.controller = controller
-        self.lbl_export_info_var = tk.StringVar(value='')
         self.__load_elements()
 
     def __load_elements(self):
-        # Etiqueta para mostrar info
-        lbl_export_info = tk.Label(self, textvariable=self.lbl_export_info_var)
+        # Checkbutton para filtrado o no
+        self.filter_var = tk.IntVar()
+        filter_check = ttk.Checkbutton(master=self, text="Filter data", variable=self.filter_var)
+        filter_check.pack(fill=tk.BOTH, padx=self.element_pad, pady=self.element_pad)
+
+        # Botón plot clouds
+        btn_plot_clouds = ttk.Button(master=self, text="PLOT CLOUDS", command=self.controller.btn_plot_clouds_pressed)
+        btn_plot_clouds.pack(fill=tk.BOTH,  pady=self.element_pad, padx=self.element_pad)
 
         # Botón exportar
         btn_export_clouds = ttk.Button(master=self, text="EXPORT CLOUDS CSV",
                                        command=self.controller.btn_export_pressed)
+        btn_export_clouds.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
 
-        # Botón plot clouds
-        btn_plot_clouds = ttk.Button(master=self, text="PLOT CLOUDS", command=self.controller.btn_plot_clouds_pressed)
-
-        # Pack elements
-        btn_plot_clouds.pack(fill=tk.BOTH, padx=10, pady=10)         # Plot clouds button (as attribute)
-        btn_export_clouds.pack(fill=tk.BOTH, padx=10, pady=10)       # Export button (as attribute)
-        lbl_export_info.pack(fill=tk.BOTH, padx=10, pady=10)
+        # Etiqueta para mostrar info
+        self.lbl_export_info_var = tk.StringVar(value='')
+        lbl_export_info = tk.Label(self, textvariable=self.lbl_export_info_var)
+        lbl_export_info.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
 
 
 class View(tk.Tk):
@@ -131,6 +144,7 @@ class View(tk.Tk):
         super().__init__()
         self.controller = controller
 
+        self.config(padx=10, pady=10)
         self.title("Cloud Analyzer")
         self.resizable(False, False)
         self.iconbitmap(resource_path('resources/cloud_ico.ico'))
@@ -149,15 +163,17 @@ class View(tk.Tk):
         self.frame_analyze = AnalyzeFrame(self, self.controller)
         self.frame_data = DataFrame(self, self.controller)
 
-        # ---------- PACK ELEMENTS ----------
-        lbl_image.pack(padx=50, pady=10)                 # Image
-        self.frame_load.pack(fill=tk.BOTH, padx=10, pady=10)
-        self.frame_analyze.pack(fill=tk.BOTH, padx=10, pady=10)
-        self.frame_data.pack(fill=tk.BOTH, padx=10, pady=10)
+        padding = 5
+        lbl_image.grid(row=0, column=0, columnspan=2, padx=padding, pady=padding)
+        self.frame_load.grid(row=1, column=0, sticky=tk.N+tk.E+tk.S+tk.W, padx=padding, pady=padding)
+        self.frame_data.grid(row=2, column=0, sticky=tk.N+tk.E+tk.S+tk.W, padx=padding, pady=padding)
+        self.frame_analyze.grid(row=1, column=1, rowspan=2, sticky=tk.N+tk.E+tk.S+tk.W, padx=padding, pady=padding)
+
+        tk.Label(text='Developed by Fran Guillén').grid(row=3, column=1, sticky=tk.E, padx=5)
 
     def disable_frames(self):
         self.frame_analyze.disable_frame()
         self.frame_data.disable_frame()
 
     def csv_error(self):
-        mb.showerror("Error", "Invalid csv file.")
+        mb.showerror("Error", "Invalid csv file.\nFile must contain {'Time', 't', 'G', 'T', 'V', 'C', 'f'}")

@@ -134,7 +134,7 @@ class DataFrame(MyFrame):
         btn_export_clouds.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
 
         # Etiqueta para mostrar info
-        self.lbl_export_info_var = tk.StringVar(value='')
+        self.lbl_export_info_var = tk.StringVar(value='Data not exported')
         lbl_export_info = tk.Label(self, textvariable=self.lbl_export_info_var)
         lbl_export_info.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
 
@@ -145,7 +145,7 @@ class View(tk.Tk):
         self.controller = controller
 
         self.config(padx=10, pady=10)
-        self.title("Cloud Analyzer")
+        self.title("Clouds Analyzer")
         self.resizable(False, False)
         self.iconbitmap(resource_path('resources/cloud_ico.ico'))
 
@@ -154,7 +154,7 @@ class View(tk.Tk):
 
     def __load_elements(self):
         # Image
-        cloud_image = tk.PhotoImage(file=resource_path('resources/cloud2.png'))
+        cloud_image = tk.PhotoImage(file=resource_path('resources/header.png'))
         lbl_image = tk.Label(self, image=cloud_image, anchor="center")
         lbl_image.image = cloud_image
 
@@ -169,7 +169,7 @@ class View(tk.Tk):
         self.frame_data.grid(row=2, column=0, sticky=tk.N+tk.E+tk.S+tk.W, padx=padding, pady=padding)
         self.frame_analyze.grid(row=1, column=1, rowspan=2, sticky=tk.N+tk.E+tk.S+tk.W, padx=padding, pady=padding)
 
-        tk.Label(text='Developed by Fran Guillén').grid(row=3, column=1, sticky=tk.E, padx=5)
+        tk.Label(text='Developed by Fran Guillén').grid(row=3, column=1, sticky=tk.E, padx=padding)
 
     def disable_frames(self):
         self.frame_analyze.disable_frame()
@@ -177,3 +177,6 @@ class View(tk.Tk):
 
     def csv_error(self):
         mb.showerror("Error", "Invalid csv file.\nFile must contain {'Time', 't', 'G', 'T', 'V', 'C', 'f'}")
+
+    def options_error(self):
+        mb.showerror("Error", "You must select a value!")

@@ -9,7 +9,7 @@ import ntpath
 class Controller():
     def __init__(self):
         self.model = DayModel(self)    # initializes the model
-        self.view = View(self)      # initializes the view
+        self.view = View(self)         # initializes the view
         self.view.mainloop()
 
     # ---------- EVENT HANDLERS ----------
@@ -21,14 +21,7 @@ class Controller():
         if not filepath:
             self.view.frame_load.lbl_info_var.set(filepath_error)
         else:
-
-            try:
-                self.model.load_csv_data(filepath)
-            except FileError:
-                self.view.csv_error()
-                self.view.frame_load.lbl_info_var.set(filepath_error)
-                return
-
+            self.model.load_csv_data(filepath)
             self.view.frame_analyze.enable_frame()
             file_name = ntpath.basename(filepath)
             sample_time = self.model.get_sample_time()

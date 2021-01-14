@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox as mb
+import traceback
 import sys
 import os
 
@@ -144,6 +145,8 @@ class View(tk.Tk):
         super().__init__()
         self.controller = controller
 
+        tk.Tk.report_callback_exception = self.callback_error
+
         self.config(padx=10, pady=10)
         self.title("Clouds Analyzer")
         self.resizable(False, False)
@@ -180,3 +183,11 @@ class View(tk.Tk):
 
     def options_error(self):
         mb.showerror("Error", "You must select a value!")
+    
+    def callback_error(self, *args):
+        # Build the error message
+        message = 'Generic error:\n\n'
+        message += traceback.format_exc()
+        mb.showerror('Error', message)
+
+    

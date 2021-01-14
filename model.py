@@ -38,8 +38,8 @@ class DayModel:
     def load_csv_data(self, filepath):
         self.__reset()
         self.__data = pd.read_csv(filepath)
-        if not {'Time', 't', 'G', 'T', 'V', 'I', 'f'}.issubset(self.__data.columns):
-            raise FileError("csv file invalid")
+        if not {'Time', 't', 'G', 'V', 'I', 'f'}.issubset(self.__data.columns):
+            raise FileError("csv file invalid. Need {Time, t, G, V, I, f}")
         else:
             # Obtener el tiempo de muestreo del archivo
             self.__sample_time_ms = self.__data['t'][1] - self.__data['t'][0]
@@ -58,6 +58,9 @@ class DayModel:
 
         # Se filtra la señal primero. Aquí se podría poner un filtro u otro dependiendo de como se quiera filtrar
         self.__irradiance_smooth = smoother(self.__data['G'])
+
+        if derivate_interval_ms < self.__sample_time_ms:
+            derivate_interval_ms = self.__sample_time_ms
 
         # Se le pasa a la derivada la señal filtrada, el intervalo cada el que se hace y el tiempo de muestreo
         self.__irradiance_p = derivate(self.__irradiance_smooth, derivate_interval_ms, self.__sample_time_ms)

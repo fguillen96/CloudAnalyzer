@@ -23,6 +23,7 @@ class Controller():
         else:
             self.model.load_csv_data(filepath)
             self.view.frame_analyze.enable_frame()
+            self.view.frame_plot.enable_frame()
             file_name = ntpath.basename(filepath)
             sample_time = self.model.get_sample_time()
 
@@ -64,3 +65,24 @@ class Controller():
             self.view.frame_data.lbl_export_info_var.set("Succesfully exported!")
         else:
             self.view.frame_data.lbl_export_info_var.set("Choose filepath!")
+
+    def btn_plot_pressed(self):
+        var_list = []
+
+        if self.view.frame_plot.irradiance_var.get():
+            var_list.append(('G', int(self.view.frame_plot.irradiance_max.get())))
+        if self.view.frame_plot.celltemp_var.get():
+            var_list.append(('T', int(self.view.frame_plot.celltemp_max.get())))
+        if self.view.frame_plot.voltage_var.get():
+            var_list.append(('V', int(self.view.frame_plot.voltage_max.get())))
+        if self.view.frame_plot.current_var.get():
+            var_list.append(('I', int(self.view.frame_plot.current_max.get())))
+        if self.view.frame_plot.power_var.get():
+            var_list.append(('P', int(self.view.frame_plot.power_max.get())))
+        if self.view.frame_plot.frequency_var.get():
+            var_list.append(('f', int(self.view.frame_plot.frequency_max.get())))
+        
+        if var_list:
+            self.model.plot_data(var_list)
+
+        

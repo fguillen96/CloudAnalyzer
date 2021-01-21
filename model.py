@@ -3,6 +3,7 @@ from utils.derivate_utils import derivate
 from utils.filters import smoother
 from matplotlib import pyplot as plt
 import numpy as np
+from utils.plot_utils import plot_pv_params
 
 
 class FileError(Exception):
@@ -109,9 +110,9 @@ class DayModel:
 
         samples_pre_post = (time_pre_post * 1000) // self.__sample_time_ms
 
+        # Get keys
+        keys = keys = self.__data.keys()
         if filter:
-            # Get keys
-            keys = self.__data.keys()
             keys = np.delete(keys.values, [0, 1])
 
         for cloud_index in clouds_index:
@@ -186,6 +187,13 @@ class DayModel:
             plt.fill_between(t, self.__irradiance_p, where=(t >= t[cloud[0]]) & (t <= t[cloud[1]]))
 
         plt.show()
+
+    def plot_data(self, data_to_plot):
+        data_dict = {}
+        for var in data_to_plot:
+            data_dict[var[0]] = (var[1], self.__data[var[0]])
+
+        plot_pv_params(self.__data['t'], data_dict)
 
     def get_sample_time(self):
         return self.__sample_time_ms

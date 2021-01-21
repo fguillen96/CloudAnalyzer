@@ -93,9 +93,8 @@ class AnalyzeFrame(MyFrame):
 
         frame_lbl_time = ttk.LabelFrame(self, labelanchor='nw', text='Time between clouds (ms)',
                                         padding=self.element_pad)
-        var = tk.IntVar(value=500)
-        self.ent_time_btw_clouds = ttk.Spinbox(master=frame_lbl_time, from_=500, to=5000,
-                                               textvariable=var, increment=500)
+
+        self.ent_time_btw_clouds = ttk.Spinbox(master=frame_lbl_time, from_=500, to=5000, increment=500)
         self.ent_time_btw_clouds.pack(fill=tk.BOTH, padx=self.element_pad, pady=self.element_pad)
 
         # Boton
@@ -140,6 +139,76 @@ class DataFrame(MyFrame):
         lbl_export_info.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
 
 
+class PllotData(MyFrame):
+    def __init__(self, master, controller):
+        super().__init__(master)
+        self.config(labelanchor='nw', text='Plot some data?', padx=self.element_pad, pady=self.element_pad)
+        self.controller = controller
+        self.__load_elements()
+
+    def __load_elements(self):
+        # Frame para meter todos los checkbox
+        frame_lbl_vars = ttk.LabelFrame(self, labelanchor='nw', text='Vars', padding=self.element_pad)
+
+        # Irradiance checkbox and spinbox
+        self.irradiance_var = tk.IntVar()
+
+        irradiance_check = ttk.Checkbutton(master=frame_lbl_vars, text="Irradiance", variable=self.irradiance_var)
+        self.irradiance_max = tk.Spinbox(master=frame_lbl_vars, increment=100,
+                                         textvariable=tk.IntVar(value=1164), width=5, from_=100, to=1164)
+        irradiance_check.grid(row=0, column=0, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+        self.irradiance_max.grid(row=0, column=1, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+
+        # Temperature checkbox and spinbox
+        self.celltemp_var = tk.IntVar()
+        celltemp_check = ttk.Checkbutton(master=frame_lbl_vars, text="Temp", variable=self.celltemp_var)
+        self.celltemp_max = tk.Spinbox(master=frame_lbl_vars, increment=10,
+                                       textvariable=tk.IntVar(value=100), width=5)
+        celltemp_check.grid(row=1, column=0, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+        self.celltemp_max.grid(row=1, column=1, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+
+        # voltage checkbox and spinbox
+        self.voltage_var = tk.IntVar()
+        voltage_check = ttk.Checkbutton(master=frame_lbl_vars, text="Voltage", variable=self.voltage_var)
+        self.voltage_max = tk.Spinbox(master=frame_lbl_vars, increment=10,
+                                      textvariable=tk.IntVar(value=500), width=5, from_=100, to=500)
+
+        voltage_check.grid(row=2, column=0, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+        self.voltage_max.grid(row=2, column=1, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+
+        # Checkbutton para I
+        self.current_var = tk.IntVar()
+        current_check = ttk.Checkbutton(master=frame_lbl_vars, text="Current", variable=self.current_var)
+        self.current_max = tk.Spinbox(master=frame_lbl_vars, increment=1,
+                                      textvariable=tk.IntVar(value=5), width=5, from_=1, to=100)
+        current_check.grid(row=3, column=0, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+        self.current_max.grid(row=3, column=1, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+
+        # Checkbutton para P
+        self.power_var = tk.IntVar()
+        power_check = ttk.Checkbutton(master=frame_lbl_vars, text="Power", variable=self.power_var)
+        self.power_max = tk.Spinbox(master=frame_lbl_vars, increment=10,
+                                    textvariable=tk.IntVar(value=1000), width=5, from_=1, to=1000)
+       
+        power_check.grid(row=4, column=0, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+        self.power_max.grid(row=4, column=1, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+
+        # Checkbutton para F
+        self.frequency_var = tk.IntVar()
+        frequency_check = ttk.Checkbutton(master=frame_lbl_vars, text="Frequency", variable=self.frequency_var)
+        self.frequency_max = tk.Spinbox(master=frame_lbl_vars, increment=5,
+                                    textvariable=tk.IntVar(value=50), width=5, from_=1, to=50)
+        frequency_check.grid(row=5, column=0, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+        self.frequency_max.grid(row=5, column=1, padx=self.element_pad, pady=self.element_pad, sticky=tk.W)
+
+        # Pack
+        frame_lbl_vars.pack(fill=tk.BOTH, pady=self.element_pad, padx=self.element_pad)
+
+        # Plot button
+        btn_plot = ttk.Button(master=self, text="PLOT DATA", command=self.controller.btn_plot_pressed)
+        btn_plot.pack(fill=tk.BOTH, padx=self.element_pad, pady=self.element_pad)
+
+
 class View(tk.Tk):
     def __init__(self, controller):
         super().__init__()
@@ -165,29 +234,30 @@ class View(tk.Tk):
         self.frame_load = LoadCsvFrame(self, self.controller)
         self.frame_analyze = AnalyzeFrame(self, self.controller)
         self.frame_data = DataFrame(self, self.controller)
+        self.frame_plot = PllotData(self, self.controller)
 
         padding = 5
-        lbl_image.grid(row=0, column=0, columnspan=2, padx=padding, pady=padding)
+        lbl_image.grid(row=0, column=0, columnspan=3, padx=padding, pady=padding)
         self.frame_load.grid(row=1, column=0, sticky=tk.N+tk.E+tk.S+tk.W, padx=padding, pady=padding)
         self.frame_data.grid(row=2, column=0, sticky=tk.N+tk.E+tk.S+tk.W, padx=padding, pady=padding)
         self.frame_analyze.grid(row=1, column=1, rowspan=2, sticky=tk.N+tk.E+tk.S+tk.W, padx=padding, pady=padding)
+        self.frame_plot.grid(row=1, column=2, rowspan=2, sticky=tk.N+tk.E+tk.S+tk.W, padx=padding, pady=padding)
 
-        tk.Label(text='Developed by Fran Guillén').grid(row=3, column=1, sticky=tk.E, padx=padding)
+        tk.Label(text='Developed by Fran Guillén').grid(row=3, column=2, sticky=tk.E, padx=padding)
 
     def disable_frames(self):
         self.frame_analyze.disable_frame()
         self.frame_data.disable_frame()
+        self.frame_plot.disable_frame()
 
     def csv_error(self):
         mb.showerror("Error", "Invalid csv file.\nFile must contain {'Time', 't', 'G', 'T', 'V', 'C', 'f'}")
 
     def options_error(self):
         mb.showerror("Error", "You must select a value!")
-    
+
     def callback_error(self, *args):
         # Build the error message
         message = 'Generic error:\n\n'
         message += traceback.format_exc()
         mb.showerror('Error', message)
-
-    
